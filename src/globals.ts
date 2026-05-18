@@ -17,6 +17,7 @@ export const eventBus = new EventBus()
 
 export const EventNames = {
   ToggleExcerpts: 'toggle-excerpts',
+  SearchIndexUpdated: 'search-index-updated',
 } as const
 
 export const enum IndexingStepType {

@@ -27,6 +27,20 @@ export function injectSettingsBehavior(
       })
     )
 
+  if (Platform.isIosApp) {
+    new Setting(containerEl)
+      .setName('Fast startup search on iOS')
+      .setDesc(
+        'Loads a lightweight title, path, tag, and heading index first, then refreshes results when the full index is ready.'
+      )
+      .addToggle(toggle =>
+        toggle.setValue(settings.mobileFastStartupSearch).onChange(async v => {
+          settings.mobileFastStartupSearch = v
+          await saveSettings(plugin)
+        })
+      )
+  }
+
   // Show previous query results
   new Setting(containerEl)
     .setName('Show previous query results')

@@ -5,18 +5,21 @@ import { settings } from '.'
 export function htmlDescription(htmlContent: string): DocumentFragment {
   const desc = new DocumentFragment()
   const span = desc.appendChild(document.createElement('span'))
-  
+
   // Parse HTML string safely using DOMParser
   const parser = new DOMParser()
-  const parsed = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html')
-  
+  const parsed = parser.parseFromString(
+    `<div>${htmlContent}</div>`,
+    'text/html'
+  )
+
   // Check for parse errors
   if (parsed.body.querySelector('parsererror')) {
     // Fallback to plain text if parsing fails
     span.textContent = htmlContent
     return desc
   }
-  
+
   // Copy all child nodes from parsed content to span
   const sourceDiv = parsed.body.firstElementChild as HTMLElement
   if (sourceDiv) {
@@ -24,7 +27,7 @@ export function htmlDescription(htmlContent: string): DocumentFragment {
       span.appendChild(sourceDiv.firstChild)
     }
   }
-  
+
   return desc
 }
 
@@ -38,6 +41,13 @@ export interface WeightingSettings {
   weightH3: number
   weightUnmarkedTags: number
 }
+
+export type SearchResultSelection = {
+  path: string
+  count: number
+  lastSelectedAt: number
+}
+
 export function isPluginDisabled(app: App): boolean {
   return app.loadLocalStorage(K_DISABLE_OMNISEARCH) === '1'
 }
@@ -50,9 +60,12 @@ export function isCacheEnabled(): boolean {
   return !Platform.isIosApp && settings.useCache
 }
 export interface OmnisearchSettings extends WeightingSettings {
+  searchResultSelections: Record<string, SearchResultSelection[]>
   weightCustomProperties: { name: string; weight: number }[]
   /** Enables caching to speed up indexing */
   useCache: boolean
+  /** Enables the lightweight iOS startup index */
+  mobileFastStartupSearch: boolean
   /** Respect the "excluded files" Obsidian setting by downranking results ignored files */
   hideExcluded: boolean
   /** Boost more recent files */

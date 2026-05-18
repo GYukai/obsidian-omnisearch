@@ -31,6 +31,7 @@ import {
 import { notifyOnIndexed, registerAPI } from './tools/api'
 import { Database } from './database'
 import { SearchEngine } from './search/search-engine'
+import { QuickStartupIndex } from './search/quick-startup-index'
 import { DocumentsRepository } from './repositories/documents-repository'
 import { logVerbose } from './tools/utils'
 import { NotesIndexer } from './notes-indexer'
@@ -50,10 +51,12 @@ export default class OmnisearchPlugin extends Plugin {
   public readonly notesIndexer = new NotesIndexer(this)
   public readonly textProcessor = new TextProcessor(this)
   public readonly searchEngine = new SearchEngine(this)
+  public readonly quickStartupIndex = new QuickStartupIndex(this)
   public readonly searchHistory = new SearchHistory(this)
 
   private ribbonButton?: HTMLElement
   private refreshIndexCallback?: (ev: FocusEvent) => any
+  private fullIndexReady = false
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest)
@@ -77,6 +80,7 @@ export default class OmnisearchPlugin extends Plugin {
 
     await cleanOldCacheFiles(this.app)
     await this.database.clearOldDatabases()
+    await this.quickStartupIndex.loadCache()
 
     registerAPI(this)
 
@@ -165,7 +169,15 @@ export default class OmnisearchPlugin extends Plugin {
       removeEventListener
 
       await this.executeFirstLaunchTasks()
-      await this.populateIndex()
+
+      if (this.shouldUseMobileFastStartupSearch()) {
+        await this.refreshQuickStartupIndex()
+        setTimeout(() => {
+          void this.startFullIndexing()
+        }, 750)
+      } else {
+        await this.startFullIndexing()
+      }
 
       if (this.apiHttpServer && settings.httpApiEnabled) {
         this.apiHttpServer.listen(settings.httpApiPort)
@@ -194,11 +206,7 @@ export default class OmnisearchPlugin extends Plugin {
       removeEventListener('blur', this.refreshIndexCallback)
     }
 
-    // Clear cache when disabling Omnisearch
-    if (process.env.NODE_ENV === 'production') {
-      await this.database.clearCache()
-    }
-    this.apiHttpServer.close()
+    this.apiHttpServer?.close()
   }
 
   addRibbonButton(): void {
@@ -237,12 +245,35 @@ export default class OmnisearchPlugin extends Plugin {
     return (this.app as any).plugins?.plugins?.['ai-image-analyzer']?.api
   }
 
-  private async populateIndex(): Promise<void> {
-    console.time('Indexing total time')
-    indexingStep.set(IndexingStepType.ReadingFiles)
-    const files = this.app.vault
+  public isFullIndexReady(): boolean {
+    return this.fullIndexReady
+  }
+
+  public shouldUseMobileFastStartupSearch(): boolean {
+    return Platform.isIosApp && this.settings.mobileFastStartupSearch
+  }
+
+  private async startFullIndexing(): Promise<void> {
+    await this.populateIndex()
+    eventBus.emit(EventNames.SearchIndexUpdated)
+  }
+
+  private async refreshQuickStartupIndex(): Promise<void> {
+    const files = this.getIndexableFiles()
+    await this.quickStartupIndex.rebuildFromFiles(files)
+  }
+
+  private getIndexableFiles(): TFile[] {
+    return this.app.vault
       .getFiles()
       .filter(f => this.notesIndexer.isFileIndexable(f.path))
+  }
+
+  private async populateIndex(): Promise<void> {
+    this.fullIndexReady = false
+    console.time('Indexing total time')
+    indexingStep.set(IndexingStepType.ReadingFiles)
+    const files = this.getIndexableFiles()
     console.debug(`${files.length} files total`)
     console.debug(`Cache is ${isCacheEnabled() ? 'enabled' : 'disabled'}`)
     // Map documents in the background
@@ -311,6 +342,10 @@ export default class OmnisearchPlugin extends Plugin {
     if (diff.toAdd.length >= 1000 && isCacheEnabled()) {
       new Notice(`Your files have been indexed.`)
     }
+    if (this.shouldUseMobileFastStartupSearch()) {
+      await this.quickStartupIndex.rebuildFromFiles(files)
+    }
+    this.fullIndexReady = true
     indexingStep.set(IndexingStepType.Done)
     notifyOnIndexed()
   }

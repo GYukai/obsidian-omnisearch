@@ -69,18 +69,28 @@ export function registerAPI(plugin: OmnisearchPlugin): void {
   }
   registed = true
 
-  // Url scheme for obsidian://omnisearch?query=foobar
-  plugin.registerObsidianProtocolHandler('omnisearch', params => {
+  const pluginId = plugin.manifest.id
+
+  // Url scheme for obsidian://<plugin-id>?query=foobar
+  plugin.registerObsidianProtocolHandler(pluginId, params => {
     new OmnisearchVaultModal(plugin, params.query).open()
   })
 
   const api = getApi(plugin)
 
   // Public api
-  // @ts-ignore
-  globalThis['omnisearch'] = api
+  const globals = globalThis as unknown as Record<string, unknown>
+  globals[pluginId] = api
+  // Keep the legacy global available when it does not belong to another
+  // Omnisearch instance.
+  if (pluginId === 'omnisearch' || !globals['omnisearch']) {
+    globals['omnisearch'] = api
+  }
   // Deprecated
-  ;(plugin.app as any).plugins.plugins.omnisearch.api = api
+  const pluginInstance = (plugin.app as any).plugins?.plugins?.[pluginId]
+  if (pluginInstance) {
+    pluginInstance.api = api
+  }
 }
 
 export function getApi(plugin: OmnisearchPlugin) {

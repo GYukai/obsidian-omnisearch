@@ -1,9 +1,9 @@
 {
-  "id": "omnisearch",
-  "name": "Omnisearch",
-  "version": "1.29.2",
+  "id": "keronmisearch",
+  "name": "KerOmniSearch",
+  "version": "1.29.3",
   "minAppVersion": "1.7.2",
-  "description": "A search engine that just works.",
+  "description": "Personal fork of Omnisearch built directly into this vault.",
   "author": "Simon Cambier",
   "authorUrl": "https://scambier.xyz",
   "fundingUrl": {

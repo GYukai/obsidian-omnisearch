@@ -1,6 +1,6 @@
 import esbuild from 'esbuild'
-import { copy } from 'esbuild-plugin-copy'
 import esbuildSvelte from 'esbuild-svelte'
+import { copyFile, mkdir } from 'node:fs/promises'
 import { builtinModules } from 'node:module'
 import path from 'path'
 import process from 'process'
@@ -13,6 +13,23 @@ if you want to view the source, please visit the github repository of this plugi
 `
 
 const prod = process.argv[2] === 'production'
+const vaultPluginDir = String.raw`D:\ObsidianNotes\G'sV\.obsidian\plugins\keronmisearch`
+
+const copyPluginAssets = {
+  name: 'copy-plugin-assets',
+  setup(build) {
+    build.onEnd(async () => {
+      await mkdir(vaultPluginDir, { recursive: true })
+      await Promise.all([
+        copyFile('manifest.json', path.join(vaultPluginDir, 'manifest.json')),
+        copyFile(
+          path.join('assets', 'styles.css'),
+          path.join(vaultPluginDir, 'styles.css')
+        ),
+      ])
+    })
+  },
+}
 
 const context = await esbuild.context({
   banner: {
@@ -36,18 +53,13 @@ const context = await esbuild.context({
     '@lezer/lr',
     ...builtinModules,
   ],
-  outfile: path.join('./dist', 'main.js'),
+  outfile: path.join(vaultPluginDir, 'main.js'),
   plugins: [
     esbuildSvelte({
       compilerOptions: { css: 'injected' },
       preprocess: sveltePreprocess(),
     }),
-    copy({
-      assets: {
-        from: ['manifest.json', './assets/styles.css'],
-        to: ['./'],
-      },
-    }),
+    copyPluginAssets,
   ],
   format: 'cjs',
   target: 'chrome98',

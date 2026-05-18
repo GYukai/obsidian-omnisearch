@@ -117,7 +117,9 @@ export class SettingsTab extends PluginSettingTab {
 
 export function getDefaultSettings(app: App): OmnisearchSettings {
   return {
+    searchResultSelections: {},
     useCache: true,
+    mobileFastStartupSearch: true,
     hideExcluded: false,
     recencyBoost: RecencyCutoff.Disabled,
     downrankedFoldersFilters: [] as string[],

@@ -5,9 +5,17 @@ import { Notice } from 'obsidian'
 import type OmnisearchPlugin from './main'
 
 export class Database extends Dexie {
-  public static readonly dbVersion = 10
+  public static readonly dbVersion = 11
   searchHistory!: Dexie.Table<{ id?: number; query: string }, number>
   minisearch!: Dexie.Table<
+    {
+      date: string
+      paths: DocumentRef[]
+      data: AsPlainObject
+    },
+    string
+  >
+  quickIndex!: Dexie.Table<
     {
       date: string
       paths: DocumentRef[]
@@ -23,6 +31,7 @@ export class Database extends Dexie {
     this.version(Database.dbVersion).stores({
       searchHistory: '++id',
       minisearch: 'date',
+      quickIndex: 'date',
       embeds: 'embedded',
     })
   }
@@ -63,6 +72,34 @@ export class Database extends Dexie {
     console.debug('Omnisearch - Search cache written')
   }
 
+  public async getQuickIndexCache(): Promise<{
+    paths: DocumentRef[]
+    data: AsPlainObject
+  } | null> {
+    try {
+      const cachedIndex = (await this.plugin.database.quickIndex.toArray())[0]
+      return cachedIndex
+    } catch (e) {
+      console.error('Omnisearch - Error while loading quick startup cache')
+      console.error(e)
+      return null
+    }
+  }
+
+  public async writeQuickIndexCache(
+    data: AsPlainObject,
+    paths: DocumentRef[]
+  ): Promise<void> {
+    const database = this.plugin.database
+    await database.quickIndex.clear()
+    await database.quickIndex.add({
+      date: new Date().toISOString(),
+      paths,
+      data,
+    })
+    console.debug('Omnisearch - Quick startup cache written')
+  }
+
   /**
    * Deletes Omnisearch databases that have an older version than the current one
    */
@@ -77,7 +114,7 @@ export class Database extends Dexie {
       console.debug('Omnisearch - Those IndexedDb databases will be deleted:')
       for (const db of toDelete) {
         if (db.name) {
-          indexedDB.deleteDatabase(db.name)
+          await deleteDatabase(db.name)
         }
       }
     }
@@ -85,7 +122,20 @@ export class Database extends Dexie {
 
   public async clearCache() {
     await this.minisearch.clear()
+    await this.quickIndex.clear()
     await this.embeds.clear()
     new Notice('Omnisearch - Cache cleared. Please restart Obsidian.')
   }
+}
+
+function deleteDatabase(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+    request.onblocked = () => {
+      console.warn('Omnisearch - IndexedDB deletion was blocked:', name)
+      resolve()
+    }
+  })
 }

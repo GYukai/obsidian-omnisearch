@@ -49,4 +49,21 @@ describe('The Query class', () => {
       expect(query.getExactTerms()).toEqual(['lorem ipsum', 'sit amet'])
     })
   })
+
+  describe('.getPreferenceKey()', () => {
+    it('should use the same key for the same terms in a different order', () => {
+      // Act
+      const queryA = new Query('foo bar ext:md', {
+        ignoreDiacritics: true,
+        ignoreArabicDiacritics: true,
+      })
+      const queryB = new Query('bar foo ext:md', {
+        ignoreDiacritics: true,
+        ignoreArabicDiacritics: true,
+      })
+
+      // Assert
+      expect(queryA.getPreferenceKey()).toEqual(queryB.getPreferenceKey())
+    })
+  })
 })

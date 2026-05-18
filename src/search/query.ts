@@ -4,7 +4,7 @@ import { parse } from 'search-query-parser'
 const keywords = ['ext', 'path'] as const
 
 type Keywords = {
-  [K in typeof keywords[number]]?: string[]
+  [K in (typeof keywords)[number]]?: string[]
 } & { text: string[] }
 
 export class Query {
@@ -13,7 +13,10 @@ export class Query {
   }
   #inQuotes: string[]
 
-  constructor(text = '', options: { ignoreDiacritics: boolean, ignoreArabicDiacritics: boolean}) {
+  constructor(
+    text = '',
+    options: { ignoreDiacritics: boolean; ignoreArabicDiacritics: boolean }
+  ) {
     if (options.ignoreDiacritics) {
       text = removeDiacritics(text, options.ignoreArabicDiacritics)
     }
@@ -105,5 +108,24 @@ export class Query {
     }
     // Otherwise, just return the query as is
     return this.segmentsToStr()
+  }
+
+  public getPreferenceKey(): string {
+    if (this.isEmpty()) {
+      return ''
+    }
+
+    const normalize = (values?: string[]): string[] => {
+      return [...new Set(values ?? [])].filter(Boolean).sort()
+    }
+
+    return JSON.stringify({
+      text: normalize(this.query.text),
+      ext: normalize(this.query.ext),
+      path: normalize(this.query.path),
+      excludeText: normalize(this.query.exclude.text),
+      excludeExt: normalize(this.query.exclude.ext),
+      excludePath: normalize(this.query.exclude.path),
+    })
   }
 }

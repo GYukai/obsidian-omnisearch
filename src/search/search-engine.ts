@@ -321,6 +321,18 @@ export class SearchEngine {
         }
       }
     }
+
+    const selectionBoosts = this.plugin.searchHistory.getSelectionBoosts(query)
+    if (selectionBoosts.size) {
+      const maxScore = Math.max(...results.map(result => result.score), 0)
+      for (const result of results) {
+        const boost = selectionBoosts.get(result.id)
+        if (boost) {
+          result.score += maxScore * boost
+        }
+      }
+    }
+
     logVerbose('Sorting and limiting results')
 
     // Sort results and keep the 50 best
@@ -395,18 +407,29 @@ export class SearchEngine {
    */
   public async getSuggestions(
     query: Query,
-    options?: Partial<{ singleFilePath?: string }>
+    options?: Partial<{ singleFilePath?: string; allowQuickIndex?: boolean }>
   ): Promise<ResultNote[]> {
+    const prefixLength = this.plugin.settings.simpleSearch ? 3 : 1
+    if (
+      options?.allowQuickIndex &&
+      this.plugin.quickStartupIndex.canSearch(query)
+    ) {
+      return this.plugin.quickStartupIndex.getSuggestions(query, {
+        prefixLength,
+        singleFilePath: options?.singleFilePath,
+      })
+    }
+
     // Get the raw results
     let results: SearchResult[]
     if (this.plugin.settings.simpleSearch) {
       results = await this.search(query, {
-        prefixLength: 3,
+        prefixLength,
         singleFilePath: options?.singleFilePath,
       })
     } else {
       results = await this.search(query, {
-        prefixLength: 1,
+        prefixLength,
         singleFilePath: options?.singleFilePath,
       })
     }

@@ -7,6 +7,7 @@
     eventBus,
     indexingStep,
     IndexingStepType,
+    EventNames,
     type ResultNote,
     SPACE_OR_PUNCTUATION,
     Action,
@@ -113,6 +114,7 @@
     eventBus.on('vault', Action.PrevSearchHistory, prevSearchHistory)
     eventBus.on('vault', Action.NextSearchHistory, nextSearchHistory)
     eventBus.on('vault', Action.OpenInNewLeaf, openNoteInNewLeaf)
+    eventBus.on('vault', EventNames.SearchIndexUpdated, updateResultsDebounced)
     await plugin.notesIndexer.refreshIndex()
     await updateResultsDebounced()
   })
@@ -154,7 +156,11 @@
     })
     cancelableQuery = cancelable(
       new Promise(resolve => {
-        resolve(plugin.searchEngine.getSuggestions(query))
+        resolve(
+          plugin.searchEngine.getSuggestions(query, {
+            allowQuickIndex: true,
+          })
+        )
       })
     )
     resultNotes = await cancelableQuery
@@ -199,9 +205,12 @@
     modal.close()
   }
 
-  function saveCurrentQuery() {
+  function saveCurrentQuery(note?: ResultNote) {
     if (searchQuery) {
-      plugin.searchHistory.addToHistory(searchQuery)
+      void plugin.searchHistory.addToHistory(searchQuery)
+      if (note) {
+        void plugin.searchHistory.recordSelection(searchQuery, note.path)
+      }
     }
   }
 
@@ -210,7 +219,7 @@
     newPane = false,
     newLeaf = false
   ) {
-    saveCurrentQuery()
+    saveCurrentQuery(note)
     const offset = note.matches?.[0]?.offset ?? 0
     openNote(plugin, note, offset, newPane, newLeaf)
   }
@@ -246,6 +255,7 @@
     }
 
     // Generate link
+    saveCurrentQuery(selectedNote)
     let link: string
     if (file && active) {
       link = plugin.app.fileManager.generateMarkdownLink(
@@ -281,7 +291,7 @@
       return
     }
 
-    saveCurrentQuery()
+    saveCurrentQuery(selectedNote)
     modal.close()
 
     if (selectedNote) {
