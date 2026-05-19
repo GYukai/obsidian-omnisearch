@@ -1,18 +1,17 @@
 name: Release Obsidian plugin
 
 permissions:
-  id-token: write
   contents: write
-  attestations: write
 
 on:
   push:
     tags:
-      - "*"
+      - 'v*'
 
 env:
-  PLUGIN_NAME: omnisearch
+  PLUGIN_NAME: keronmisearch
   DIST_FOLDER: ./dist
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -25,87 +24,37 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          run_install: true
+          run_install: false
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           cache: 'pnpm'
-          node-version: "24.x"
+          node-version: '24.x'
 
-      - name: Build
-        id: build
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build plugin
+        run: pnpm run build
+
+      - name: Package plugin
         run: |
-          pnpm install
-          pnpm run build
-          mkdir ${{ env.PLUGIN_NAME }}
-          cp ${{ env.DIST_FOLDER }}/* ${{ env.PLUGIN_NAME }}
-          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
-          ls
-          echo "tag_name=$(git tag --sort version:refname | tail -n 1)" >> $GITHUB_OUTPUT
+          mkdir "${PLUGIN_NAME}"
+          cp "${DIST_FOLDER}/main.js" "${PLUGIN_NAME}/main.js"
+          cp "${DIST_FOLDER}/manifest.json" "${PLUGIN_NAME}/manifest.json"
+          cp "${DIST_FOLDER}/styles.css" "${PLUGIN_NAME}/styles.css"
+          zip -r "${PLUGIN_NAME}-${GITHUB_REF_NAME}.zip" "${PLUGIN_NAME}"
 
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Publish release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          draft: true
-          prerelease: false
-
-      # - name: Upload zip file
-      #   id: upload-zip
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./${{ env.PLUGIN_NAME }}.zip
-      #     asset_name: ${{ env.PLUGIN_NAME }}-${{ steps.build.outputs.tag_name }}.zip
-      #     asset_content_type: application/zip
-
-      - name: Upload manifest.json
-        id: upload-manifest
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./manifest.json
-          asset_name: manifest.json
-          asset_content_type: application/json
-
-      - name: Upload main.js
-        id: upload-main
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.DIST_FOLDER }}/main.js
-          asset_name: main.js
-          asset_content_type: text/javascript
-
-      - name: Generate artifact attestation for main.js
-        uses: actions/attest@v4
-        with:
-          subject-path: ${{ env.DIST_FOLDER }}/main.js
-
-      - name: Upload styles.css
-        id: upload-css
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.DIST_FOLDER }}/styles.css
-          asset_name: styles.css
-          asset_content_type: text/css
-
-      - name: Generate artifact attestation for styles.css
-        uses: actions/attest@v4
-        with:
-          subject-path: ${{ env.DIST_FOLDER }}/styles.css
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "${DIST_FOLDER}/manifest.json" \
+            "${DIST_FOLDER}/main.js" \
+            "${DIST_FOLDER}/styles.css" \
+            "${PLUGIN_NAME}-${GITHUB_REF_NAME}.zip" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
