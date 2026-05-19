@@ -13,18 +13,20 @@ if you want to view the source, please visit the github repository of this plugi
 `
 
 const prod = process.argv[2] === 'production'
+const distDir = 'dist'
 const vaultPluginDir = String.raw`D:\ObsidianNotes\G'sV\.obsidian\plugins\keronmisearch`
+const outputDir = prod ? distDir : vaultPluginDir
 
 const copyPluginAssets = {
   name: 'copy-plugin-assets',
   setup(build) {
     build.onEnd(async () => {
-      await mkdir(vaultPluginDir, { recursive: true })
+      await mkdir(outputDir, { recursive: true })
       await Promise.all([
-        copyFile('manifest.json', path.join(vaultPluginDir, 'manifest.json')),
+        copyFile('manifest.json', path.join(outputDir, 'manifest.json')),
         copyFile(
           path.join('assets', 'styles.css'),
-          path.join(vaultPluginDir, 'styles.css')
+          path.join(outputDir, 'styles.css')
         ),
       ])
     })
@@ -53,7 +55,7 @@ const context = await esbuild.context({
     '@lezer/lr',
     ...builtinModules,
   ],
-  outfile: path.join(vaultPluginDir, 'main.js'),
+  outfile: path.join(outputDir, 'main.js'),
   plugins: [
     esbuildSvelte({
       compilerOptions: { css: 'injected' },

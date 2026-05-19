@@ -1,7 +1,7 @@
 {
 	"id": "keronmisearch",
 	"name": "KerOmniSearch",
-	"version": "1.29.4",
+	"version": "1.29.5",
 	"minAppVersion": "1.7.2",
 	"description": "Personal fork of Omnisearch built directly into this vault.",
 	"author": "Simon Cambier",

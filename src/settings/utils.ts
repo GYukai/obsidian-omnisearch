@@ -45,6 +45,7 @@ export interface WeightingSettings {
 export type SearchResultSelection = {
   path: string
   count: number
+  weight?: number
   lastSelectedAt: number
 }
 

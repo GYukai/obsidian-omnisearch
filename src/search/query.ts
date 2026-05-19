@@ -7,6 +7,15 @@ type Keywords = {
   [K in (typeof keywords)[number]]?: string[]
 } & { text: string[] }
 
+export type QueryPreferenceKey = {
+  text: string[]
+  ext: string[]
+  path: string[]
+  excludeText: string[]
+  excludeExt: string[]
+  excludePath: string[]
+}
+
 export class Query {
   query: Keywords & {
     exclude: Keywords
@@ -110,22 +119,27 @@ export class Query {
     return this.segmentsToStr()
   }
 
-  public getPreferenceKey(): string {
-    if (this.isEmpty()) {
-      return ''
-    }
-
+  public getPreferenceKeyParts(): QueryPreferenceKey | null {
     const normalize = (values?: string[]): string[] => {
       return [...new Set(values ?? [])].filter(Boolean).sort()
     }
 
-    return JSON.stringify({
+    if (this.isEmpty()) {
+      return null
+    }
+
+    return {
       text: normalize(this.query.text),
       ext: normalize(this.query.ext),
       path: normalize(this.query.path),
       excludeText: normalize(this.query.exclude.text),
       excludeExt: normalize(this.query.exclude.ext),
       excludePath: normalize(this.query.exclude.path),
-    })
+    }
+  }
+
+  public getPreferenceKey(): string {
+    const key = this.getPreferenceKeyParts()
+    return key ? JSON.stringify(key) : ''
   }
 }
