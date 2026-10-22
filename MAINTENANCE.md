@@ -1,6 +1,6 @@
 # Maintained distribution
 
-Private BRAT repository: `GYukai/KerOmniSearch`. Plugin ID: `keronmisearch`. Independent version line starts at **2.0.0**, unrelated to upstream versions. Update package.json, manifest.json, manifest-beta.json (if present), and versions.json together before each release. Preserve original license and attribution. Never commit data.json, tokens, caches, or vault contents.
+Public GitHub fork / BRAT repository: `GYukai/obsidian-omnisearch`. Plugin ID: `keronmisearch`. Independent version line starts at **2.0.0**, unrelated to upstream versions. Update package.json, manifest.json, manifest-beta.json (if present), and versions.json together before each release. Preserve original license and attribution. Never commit data.json, tokens, caches, or vault contents.
 
 ## Upstream
 
@@ -8,4 +8,6 @@ Official source: https://github.com/scambier/obsidian-omnisearch, branch `master
 
 ## BRAT
 
-Subscribe to `GYukai/KerOmniSearch`, select Latest, and use a Keychain token with access to this private repository. Disable the original plugin before enabling this maintained copy. Migrate data.json locally only. Release assets must be main.js, manifest.json and styles.css.
+Subscribe to `GYukai/obsidian-omnisearch`, select Latest, no private-repository token is required. Disable the original plugin before enabling this maintained copy. Migrate data.json locally only. Release assets must be main.js, manifest.json and styles.css.
+
+The `maintained` default branch contains personal changes; the original upstream branch is preserved. Public release line begins at 2.0.1 (2.0.0 was prepared during the initial private setup).

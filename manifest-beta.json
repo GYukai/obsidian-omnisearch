@@ -1,11 +1,11 @@
 {
   "id": "keronmisearch",
   "name": "KerOmniSearch",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "minAppVersion": "1.7.2",
   "description": "Personal fork of Omnisearch built directly into this vault.",
   "author": "Simon Cambier; maintained by GYukai",
-  "authorUrl": "https://github.com/GYukai/KerOmniSearch",
+  "authorUrl": "https://github.com/GYukai/obsidian-omnisearch",
   "fundingUrl": {
     "Github": "https://github.com/sponsors/scambier",
     "Ko-fi": "https://ko-fi.com/scambier"
