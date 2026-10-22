@@ -1,14 +1,14 @@
 {
-	"id": "keronmisearch",
-	"name": "KerOmniSearch",
-	"version": "1.29.5",
-	"minAppVersion": "1.7.2",
-	"description": "Personal fork of Omnisearch built directly into this vault.",
-	"author": "Simon Cambier",
-	"authorUrl": "https://scambier.xyz",
-	"fundingUrl": {
-		"Github": "https://github.com/sponsors/scambier",
-		"Ko-fi": "https://ko-fi.com/scambier"
-	},
-	"isDesktopOnly": false
+  "id": "keronmisearch",
+  "name": "KerOmniSearch",
+  "version": "2.0.0",
+  "minAppVersion": "1.7.2",
+  "description": "Personal fork of Omnisearch built directly into this vault.",
+  "author": "Simon Cambier; maintained by GYukai",
+  "authorUrl": "https://github.com/GYukai/KerOmniSearch",
+  "fundingUrl": {
+    "Github": "https://github.com/sponsors/scambier",
+    "Ko-fi": "https://ko-fi.com/scambier"
+  },
+  "isDesktopOnly": false
 }

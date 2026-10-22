@@ -1,0 +1,6 @@
+{
+  "repository": "scambier/obsidian-omnisearch",
+  "branch": "master",
+  "baseCommit": "e7762203b308f3ce6a1cb12a0609aaa9184a3e45",
+  "versionPolicy": "Independent maintained SemVer, starting at 2.0.0; never copy upstream version numbers."
+}
